@@ -1,0 +1,17 @@
+{
+  "name": "dorkysearch",
+  "version": "1.0.0",
+  "description": "DorkySearch - OSINT search platform",
+  "scripts": {
+    "start": "cd frontend && npm start",
+    "build": "cd frontend && npm run build",
+    "install-frontend": "cd frontend && npm install",
+    "dev-backend": "python app.py",
+    "dev": "concurrently \"npm run dev-backend\" \"npm run start\""
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.6.3",
+    "@types/testing-library__jest-dom": "^6.0.0",
+    "concurrently": "^8.2.2"
+  }
+}

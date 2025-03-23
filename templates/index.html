@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DorkySearch - Advanced OSINT Search Engine</title>
+    <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/styles.css') }}" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+        }
+        
+        .navbar {
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 80px 0;
+            margin-bottom: 30px;
+        }
+        
+        .search-card {
+            border-radius: 15px;
+            border: none;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .search-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .search-type-btn.active {
+            background-color: var(--primary-color) !important;
+            color: white !important;
+        }
+        
+        .result-card {
+            border-radius: 10px;
+            border: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        
+        .result-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .search-btn {
+            background-color: var(--primary-color);
+            border: none;
+            font-weight: 600;
+            padding: 12px;
+            border-radius: 8px;
+        }
+        
+        .search-btn:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .phone-result {
+            background-color: white;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+        }
+        
+        .phone-info-item {
+            flex: 1;
+            min-width: 200px;
+            margin: 10px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        
+        .phone-info-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .footer {
+            background-color: var(--dark-color);
+            color: white;
+            padding: 30px 0;
+            margin-top: 50px;
+        }
+        
+        .search-type-label {
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid var(--primary-color);
+            transition: all 0.2s;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .search-type-label:hover {
+            background-color: rgba(67, 97, 238, 0.1);
+        }
+        
+        .btn-check:checked + .search-type-label {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            background-color: rgba(67, 97, 238, 0.1);
+            color: var(--primary-color);
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">DorkySearch</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    {% if not current_user.is_authenticated %}
+                        <button id="checkout-button" class="btn btn-warning me-2">
+                            �� Upgrade to Premium
+                        </button>
+                        <button type="button" class="btn btn-outline-light me-2" data-bs-toggle="modal" data-bs-target="#loginModal">
+                            Login
+                        </button>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registerModal">
+                            Sign Up
+                        </button>
+                    {% else %}
+                        <span class="text-light me-3">Welcome, {{ current_user.username }}</span>
+                        <a href="/logout" class="btn btn-outline-light">Logout</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Login</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/login" method="POST">
+                        <div class="mb-3">
+                            <label for="loginEmail" class="form-label">Email address</label>
+                            <input type="email" class="form-control" id="loginEmail" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="loginPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="loginPassword" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal fade" id="registerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Sign Up</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/register" method="POST">
+                        <div class="mb-3">
+                            <label for="registerUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="registerUsername" name="username" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerEmail" class="form-label">Email address</label>
+                            <input type="email" class="form-control" id="registerEmail" name="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="registerPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="registerPassword" name="password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Sign Up</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if not results %}
+    <!-- Hero Section (Only show on homepage) -->
+    <section class="hero-section">
+        <div class="container text-center">
+            <h1 class="display-4 fw-bold mb-3 fade-in">Advanced Open Source Intelligence Search</h1>
+            <p class="lead mb-4 fade-in">Powerful search tools for researchers, professionals, and security experts</p>
+        </div>
+    </section>
+    {% endif %}
+
+    <div class="container {% if results %}mt-4{% endif %}">
+        <!-- Search Form -->
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card search-card mb-4">
+                    <div class="card-body p-4">
+                        <h3 class="card-title mb-4 text-center fw-bold">
+                            <i class="fas fa-search me-2"></i>
+                            Advanced Search
+                        </h3>
+                        <form action="/search" method="POST">
+                            <div class="mb-4">
+                                <label for="query" class="form-label fw-bold">Search Query</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="fas fa-keyboard"></i></span>
+                                    <input type="text" class="form-control form-control-lg" id="query" name="query" required
+                                        placeholder="Enter your search query" value="{{ query if query else '' }}">
+                                </div>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Search Type</label>
+                                <div class="d-flex flex-wrap gap-2">
+                                    <input type="radio" class="btn-check" name="type" id="general" value="general" {% if not results or results.type == 'general' %}checked{% endif %}>
+                                    <label class="search-type-label" for="general">
+                                        <i class="fas fa-globe me-1"></i> General
+                                    </label>
+
+                                    <input type="radio" class="btn-check" name="type" id="documents" value="documents" {% if results and results.type == 'documents' %}checked{% endif %}>
+                                    <label class="search-type-label" for="documents">
+                                        <i class="fas fa-file me-1"></i> Documents
+                                    </label>
+
+                                    <input type="radio" class="btn-check" name="type" id="sensitive" value="sensitive" {% if results and results.type == 'sensitive' %}checked{% endif %}>
+                                    <label class="search-type-label" for="sensitive">
+                                        <i class="fas fa-user-shield me-1"></i> Sensitive
+                                    </label>
+
+                                    <input type="radio" class="btn-check" name="type" id="directories" value="directories" {% if results and results.type == 'directories' %}checked{% endif %}>
+                                    <label class="search-type-label" for="directories">
+                                        <i class="fas fa-folder me-1"></i> Directories
+                                    </label>
+
+                                    <input type="radio" class="btn-check" name="type" id="technology" value="technology" {% if results and results.type == 'technology' %}checked{% endif %}>
+                                    <label class="search-type-label" for="technology">
+                                        <i class="fas fa-code me-1"></i> Technology
+                                    </label>
+
+                                    <input type="radio" class="btn-check" name="type" id="phone" value="phone" {% if results and results.type == 'phone' %}checked{% endif %}>
+                                    <label class="search-type-label" for="phone">
+                                        <i class="fas fa-phone me-1"></i> Phone
+                                    </label>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary search-btn w-100 py-3">
+                                <i class="fas fa-search me-2"></i>
+                                Search Now
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Search Results Section -->
+                {% if results %}
+                    <div class="container mt-4">
+                        {% if results.error %}
+                            <div class="alert alert-danger" role="alert">
+                                {{ results.error }}
+                            </div>
+                        {% else %}
+                            {% if results.type == 'phone' and results.phone_data %}
+                                <!-- Phone Search Results -->
+                                <div class="container mt-4">
+                                    <div class="row">
+                                        <!-- Basic Information Card -->
+                                        <div class="col-md-4 mb-4">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-primary text-white">
+                                                    <h5 class="card-title mb-0">Basic Information</h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <ul class="list-unstyled">
+                                                        <li><strong>Number:</strong> {{ results.phone_data.scan_results.basic_info.formatted }}</li>
+                                                        <li><strong>Country:</strong> {{ results.phone_data.scan_results.basic_info.country }}</li>
+                                                        <li><strong>Region:</strong> {{ results.phone_data.scan_results.basic_info.region }}</li>
+                                                        <li><strong>Carrier:</strong> {{ results.phone_data.scan_results.basic_info.carrier }}</li>
+                                                        <li><strong>Timezone:</strong> {{ results.phone_data.scan_results.basic_info.timezone|join(', ') }}</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Metadata Card -->
+                                        <div class="col-md-4 mb-4">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-info text-white">
+                                                    <h5 class="card-title mb-0">Number Details</h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <ul class="list-unstyled">
+                                                        <li><strong>Type:</strong> {{ results.phone_data.scan_results.metadata.number_type }}</li>
+                                                        <li><strong>Area Code:</strong> {{ results.phone_data.scan_results.metadata.area_code }}</li>
+                                                        <li><strong>Toll Free:</strong> {{ "Yes" if results.phone_data.scan_results.metadata.is_toll_free else "No" }}</li>
+                                                        <li><strong>VoIP:</strong> {{ "Yes" if results.phone_data.scan_results.metadata.is_voip else "No" }}</li>
+                                                        <li><strong>Registration:</strong> {{ results.phone_data.scan_results.metadata.registration_date }}</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <!-- Reputation Card -->
+                                        <div class="col-md-4 mb-4">
+                                            <div class="card h-100">
+                                                <div class="card-header bg-warning text-dark">
+                                                    <h5 class="card-title mb-0">Reputation</h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <ul class="list-unstyled">
+                                                        <li><strong>Spam Risk:</strong> {{ results.phone_data.scan_results.reputation.spam_risk }}</li>
+                                                        <li><strong>Fraud Reports:</strong> {{ results.phone_data.scan_results.reputation.fraud_reports }}</li>
+                                                        <li><strong>Reported as Spam:</strong> {{ "Yes" if results.phone_data.scan_results.reputation.reported_as_spam else "No" }}</li>
+                                                        <li><strong>Reported as Fraud:</strong> {{ "Yes" if results.phone_data.scan_results.reputation.reported_as_fraud else "No" }}</li>
+                                                        <li><strong>Last Checked:</strong> {{ results.phone_data.scan_results.reputation.last_checked }}</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Data Sources Section -->
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-header bg-success text-white">
+                                                    <h5 class="card-title mb-0">Available Data Sources</h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <div class="row">
+                                                        {% for source, value in results.phone_data.scan_results.data_sources.items() %}
+                                                            <div class="col-md-4 mb-3">
+                                                                <div class="d-flex align-items-center">
+                                                                    {% if value %}
+                                                                        <span class="badge bg-success me-2">Available</span>
+                                                                    {% else %}
+                                                                        <span class="badge bg-secondary me-2">Not Used</span>
+                                                                    {% endif %}
+                                                                    <span class="text-capitalize">{{ source.replace('_', ' ') }}</span>
+                                                                </div>
+                                                            </div>
+                                                        {% endfor %}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Recommendations Section -->
+                                    <div class="row mt-4">
+                                        <div class="col-12">
+                                            <div class="card">
+                                                <div class="card-header bg-secondary text-white">
+                                                    <h5 class="card-title mb-0">Recommendations</h5>
+                                                </div>
+                                                <div class="card-body">
+                                                    <ul class="list-group">
+                                                        {% for recommendation in results.phone_data.scan_results.recommendations %}
+                                                        <li class="list-group-item">{{ recommendation }}</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- PhoneInfoga Results Section -->
+                                {% if results.type == 'phone' and results.phone_data and results.phone_data.scan_results.phoneinfoga.available %}
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header bg-dark text-white">
+                                                <h5 class="card-title mb-0">PhoneInfoga Results</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Enhanced Data from PhoneInfoga -->
+                                                {% if results.phone_data.scan_results.enhanced_data %}
+                                                <div class="row">
+                                                    <!-- Google Search Results -->
+                                                    {% if results.phone_data.scan_results.enhanced_data.google_search %}
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-info text-white">
+                                                                <h6 class="card-title mb-0">Google Search Results</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <p>Found in search results: 
+                                                                    {{ "Yes" if results.phone_data.scan_results.enhanced_data.google_search.disposable != false else "No" }}
+                                                                </p>
+                                                                {% if results.phone_data.scan_results.enhanced_data.google_search.links %}
+                                                                <ul class="list-group">
+                                                                    {% for link in results.phone_data.scan_results.enhanced_data.google_search.links %}
+                                                                    <li class="list-group-item">
+                                                                        <a href="{{ link }}" target="_blank">{{ link }}</a>
+                                                                    </li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <!-- NumVerify Results -->
+                                                    {% if results.phone_data.scan_results.enhanced_data.num_verify %}
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-info text-white">
+                                                                <h6 class="card-title mb-0">NumVerify Results</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <ul class="list-unstyled">
+                                                                    {% for key, value in results.phone_data.scan_results.enhanced_data.num_verify.items() %}
+                                                                    <li><strong>{{ key|title }}:</strong> {{ value }}</li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    
+                                                    <!-- OVH API Results -->
+                                                    {% if results.phone_data.scan_results.enhanced_data.ovh_api %}
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-info text-white">
+                                                                <h6 class="card-title mb-0">OVH API Results</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <ul class="list-unstyled">
+                                                                    {% for key, value in results.phone_data.scan_results.enhanced_data.ovh_api.items() %}
+                                                                    <li><strong>{{ key|title }}:</strong> {{ value }}</li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                </div>
+                                                {% else %}
+                                                <div class="alert alert-info">
+                                                    PhoneInfoga scan was performed but no enhanced data was found.
+                                                </div>
+                                                {% endif %}
+                                                
+                                                <!-- Raw PhoneInfoga Data (Collapsible) -->
+                                                <div class="mt-3">
+                                                    <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#phoneinfogaRawData" aria-expanded="false" aria-controls="phoneinfogaRawData">
+                                                        Show Raw PhoneInfoga Data
+                                                    </button>
+                                                    <div class="collapse mt-2" id="phoneinfogaRawData">
+                                                        <div class="card card-body bg-light">
+                                                            <pre class="mb-0">{{ results.phone_data.scan_results.phoneinfoga.data|tojson(indent=2) }}</pre>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Owner Information Section -->
+                                {% if results.type == 'phone' and results.phone_data and results.phone_data.scan_results.owner_info %}
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header bg-primary text-white">
+                                                <h5 class="card-title mb-0">Owner Information</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Individual Owner -->
+                                                {% if results.phone_data.scan_results.owner_info.type == 'Individual' %}
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="card-title mb-0">Personal Details</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <ul class="list-unstyled">
+                                                                    <li><strong>Name:</strong> {{ results.phone_data.scan_results.owner_info.name }}</li>
+                                                                    <li><strong>Age Range:</strong> {{ results.phone_data.scan_results.owner_info.age_range }}</li>
+                                                                    <li><strong>Gender:</strong> {{ results.phone_data.scan_results.owner_info.gender }}</li>
+                                                                    <li><strong>Possible Relatives:</strong> {{ results.phone_data.scan_results.owner_info.possible_relatives }}</li>
+                                                                    <li><strong>Education:</strong> {{ results.phone_data.scan_results.owner_info.education or 'Unknown' }}</li>
+                                                                    <li><strong>Occupation:</strong> {{ results.phone_data.scan_results.owner_info.occupation or 'Unknown' }}</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="card-title mb-0">Possible Locations</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                {% if results.phone_data.scan_results.owner_info.possible_locations %}
+                                                                <ul class="list-group">
+                                                                    {% for location in results.phone_data.scan_results.owner_info.possible_locations %}
+                                                                    <li class="list-group-item">{{ location }}</li>
+                                                                    {% endfor %}
+                                                                </ul>
+                                                                {% else %}
+                                                                <p class="mb-0">No location data available</p>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div class="row mt-3">
+                                                    <div class="col-12">
+                                                        <div class="card">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="card-title mb-0">Public Records</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <div class="row">
+                                                                    {% for record_type, exists in results.phone_data.scan_results.owner_info.public_records.items() %}
+                                                                    <div class="col-md-4 mb-2">
+                                                                        <div class="d-flex align-items-center">
+                                                                            <span class="badge {% if exists %}bg-success{% else %}bg-secondary{% endif %} me-2">
+                                                                                <i class="bi {% if exists %}bi-check-lg{% else %}bi-x-lg{% endif %}"></i>
+                                                                            </span>
+                                                                            <span>{{ record_type|replace('_', ' ')|title }}</span>
+                                                                        </div>
+                                                                    </div>
+                                                                    {% endfor %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Business Owner -->
+                                                {% elif results.phone_data.scan_results.owner_info.type == 'Business' %}
+                                                <div class="row">
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="card-title mb-0">Business Details</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <ul class="list-unstyled">
+                                                                    <li><strong>Business Name:</strong> {{ results.phone_data.scan_results.owner_info.business_name }}</li>
+                                                                    <li><strong>Industry:</strong> {{ results.phone_data.scan_results.owner_info.industry }}</li>
+                                                                    <li><strong>Size:</strong> {{ results.phone_data.scan_results.owner_info.size }}</li>
+                                                                    <li><strong>Year Established:</strong> {{ results.phone_data.scan_results.owner_info.year_established }}</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6 mb-3">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="card-title mb-0">Business Records</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <ul class="list-unstyled">
+                                                                    <li><strong>BBB Rating:</strong> {{ results.phone_data.scan_results.owner_info.business_records.bbb_rating or 'Not Rated' }}</li>
+                                                                    <li><strong>Publicly Traded:</strong> {{ 'Yes' if results.phone_data.scan_results.owner_info.business_records.is_publicly_traded else 'No' }}</li>
+                                                                    <li><strong>Has Website:</strong> {{ 'Yes' if results.phone_data.scan_results.owner_info.business_records.has_website else 'No' }}</li>
+                                                                    <li><strong>Customer Reviews:</strong> {{ results.phone_data.scan_results.owner_info.business_records.customer_reviews }}</li>
+                                                                    <li><strong>Average Rating:</strong> {{ results.phone_data.scan_results.owner_info.business_records.average_rating }}/5.0</li>
+                                                                </ul>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                <!-- Social Media Section -->
+                                {% if results.type == 'phone' and results.phone_data and results.phone_data.scan_results.social_media %}
+                                <div class="row mt-4">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header bg-info text-white">
+                                                <h5 class="card-title mb-0">Social Media Presence</h5>
+                                            </div>
+                                            <div class="card-body">
+                                                <!-- Summary -->
+                                                <div class="row mb-4">
+                                                    <div class="col-md-4">
+                                                        <div class="card h-100">
+                                                            <div class="card-body text-center">
+                                                                <h1 class="display-4">{{ results.phone_data.scan_results.social_media.platforms_found|length }}</h1>
+                                                                <p class="lead">Platforms Found</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="card h-100">
+                                                            <div class="card-body text-center">
+                                                                <h1 class="display-4">{{ results.phone_data.scan_results.social_media.online_presence_score }}/10</h1>
+                                                                <p class="lead">Online Presence Score</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="card h-100">
+                                                            <div class="card-body text-center">
+                                                                <h1 class="display-4 {% if results.phone_data.scan_results.social_media.privacy_risk == 'Low' %}text-success{% elif results.phone_data.scan_results.social_media.privacy_risk == 'Medium' %}text-warning{% else %}text-danger{% endif %}">
+                                                                    {{ results.phone_data.scan_results.social_media.privacy_risk }}
+                                                                </h1>
+                                                                <p class="lead">Privacy Risk</p>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <!-- Platform Cards -->
+                                                {% if results.phone_data.scan_results.social_media.platforms_found %}
+                                                <div class="row">
+                                                    {% for platform in results.phone_data.scan_results.social_media.platforms_found %}
+                                                    {% if results.phone_data.scan_results.social_media.platform_data[platform] %}
+                                                    <div class="col-md-4 mb-3">
+                                                        <div class="card h-100">
+                                                            <div class="card-header bg-light">
+                                                                <h6 class="card-title mb-0">{{ platform }}</h6>
+                                                            </div>
+                                                            <div class="card-body">
+                                                                <ul class="list-unstyled">
+                                                                    <li><strong>Profile:</strong> {{ results.phone_data.scan_results.social_media.platform_data[platform].profile_name }}</li>
+                                                                    <li><strong>Last Active:</strong> {{ results.phone_data.scan_results.social_media.platform_data[platform].last_active or 'Unknown' }}</li>
+                                                                    <li><strong>Account Type:</strong> {{ results.phone_data.scan_results.social_media.platform_data[platform].account_type }}</li>
+                                                                    <li><strong>Public Profile:</strong> {{ 'Yes' if results.phone_data.scan_results.social_media.platform_data[platform].public else 'No' }}</li>
+                                                                    
+                                                                    {% if results.phone_data.scan_results.social_media.platform_data[platform].followers %}
+                                                                    <li><strong>Followers:</strong> {{ results.phone_data.scan_results.social_media.platform_data[platform].followers }}</li>
+                                                                    {% endif %}
+                                                                    
+                                                                    {% if results.phone_data.scan_results.social_media.platform_data[platform].connections %}
+                                                                    <li><strong>Connections:</strong> {{ results.phone_data.scan_results.social_media.platform_data[platform].connections }}</li>
+                                                                    {% endif %}
+                                                                </ul>
+                                                                
+                                                                {% if results.phone_data.scan_results.social_media.search_patterns[platform] %}
+                                                                <a href="https://www.google.com/search?q={{ results.phone_data.scan_results.social_media.search_patterns[platform]|urlencode }}" target="_blank" class="btn btn-sm btn-outline-primary mt-2">
+                                                                    Search on Google
+                                                                </a>
+                                                                {% endif %}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {% endif %}
+                                                    {% endfor %}
+                                                </div>
+                                                {% else %}
+                                                <div class="alert alert-info">
+                                                    No social media profiles found associated with this phone number.
+                                                </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% else %}
+                                <!-- Regular Search Results -->
+                                <div class="mb-4">
+                                    <h3>Search Results for "{{ results.query }}"</h3>
+                                    {% if results.dork_query %}
+                                        <p class="text-muted">Dork Query: {{ results.dork_query }}</p>
+                                    {% endif %}
+                                </div>
+
+                                {% if results.search_items %}
+                                    {% for item in results.search_items %}
+                                        <div class="card result-card mb-3">
+                                            <div class="card-body">
+                                                <h5 class="card-title">
+                                                    <a href="{{ item.link }}" target="_blank" class="text-primary">{{ item.title }}</a>
+                                                </h5>
+                                                <p class="card-text text-muted small">{{ item.link }}</p>
+                                                <p class="card-text">{{ item.snippet }}</p>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+
+                                    {% if results.analytics %}
+                                        <div class="alert alert-info mt-4">
+                                            <h5>Analytics</h5>
+                                            <p>Total Results: {{ results.analytics.total_results }}</p>
+                                            {% if results.analytics.insights %}
+                                                <p>{{ results.analytics.insights }}</p>
+                                            {% endif %}
+                                        </div>
+                                    {% endif %}
+                                {% else %}
+                                    <div class="alert alert-warning">
+                                        No results found for your search.
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-4 bg-dark">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="mb-3">DorkySearch</h5>
+                    <p class="text-muted">Advanced search tools for OSINT research and security professionals.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p class="mb-0 text-muted">&copy; 2023 DorkySearch. All rights reserved.</p>
+                    <p class="mb-0 text-muted small">Terms of Service | Privacy Policy</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <div class="subscription-section mt-4 text-center">
+        <button id="checkout-button" class="btn btn-primary">
+            Subscribe to Premium
+        </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="https://js.stripe.com/v3/"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize Stripe
+            {% if stripe_publishable_key %}
+                const stripe = Stripe('{{ stripe_publishable_key }}');
+                
+                // Find all checkout buttons (there might be multiple on the page)
+                const checkoutButtons = document.querySelectorAll('#checkout-button');
+                
+                checkoutButtons.forEach(button => {
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        
+                        // Show loading state
+                        button.disabled = true;
+                        button.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Loading...';
+                        
+                        // Call the server to create a checkout session
+                        fetch('/create-checkout-session', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                        })
+                        .then(function(response) {
+                            if (response.ok) {
+                                return response.json();
+                            }
+                            return response.json().then(function(json) {
+                                throw new Error(json.error || 'Something went wrong with the checkout process.');
+                            });
+                        })
+                        .then(function(session) {
+                            // Redirect to Stripe Checkout
+                            return stripe.redirectToCheckout({ sessionId: session.id });
+                        })
+                        .then(function(result) {
+                            if (result.error) {
+                                // Display error to the customer
+                                alert(result.error.message);
+                            }
+                        })
+                        .catch(function(error) {
+                            console.error('Error:', error);
+                            alert('An error occurred: ' + error.message);
+                            // Reset button state
+                            button.disabled = false;
+                            button.innerHTML = 'Subscribe to Premium';
+                        });
+                    });
+                });
+            {% else %}
+                console.error('Stripe publishable key is missing');
+                const checkoutButtons = document.querySelectorAll('#checkout-button');
+                checkoutButtons.forEach(button => {
+                    button.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        alert('Subscription service is currently unavailable. Please try again later.');
+                    });
+                });
+            {% endif %}
+        });
+    </script>
+</body>
+</html> 

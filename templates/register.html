@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - DorkySearch</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <link rel="icon" href="/static/img/favicon.ico" type="image/x-icon">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">
+                <a href="/">
+                    <img src="/static/img/logo.png" alt="DorkySearch Logo">
+                    <h1>DorkySearch</h1>
+                </a>
+            </div>
+        </header>
+
+        <main>
+            <div class="auth-container">
+                <h2>Create Account</h2>
+                <form action="/register" method="post" class="auth-form">
+                    <div class="form-group">
+                        <label for="username">Username</label>
+                        <input type="text" id="username" name="username" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="confirm-password">Confirm Password</label>
+                        <input type="password" id="confirm-password" name="confirm-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+                <div class="auth-links">
+                    <p>Already have an account? <a href="/login">Log In</a></p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2025 DorkySearch. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="/static/js/main.js"></script>
+</body>
+</html> 

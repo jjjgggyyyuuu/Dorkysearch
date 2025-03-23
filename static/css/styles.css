@@ -1,0 +1,195 @@
+:root {
+    --primary-color: #4361ee;
+    --secondary-color: #3f37c9;
+    --accent-color: #4895ef;
+    --light-color: #f8f9fa;
+    --dark-color: #212529;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f2f5;
+}
+
+.navbar {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.hero-section {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+    padding: 80px 0;
+    margin-bottom: 30px;
+}
+
+.search-card {
+    border-radius: 15px;
+    border: none;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.search-card:hover {
+    transform: translateY(-5px);
+}
+
+.search-type-btn.active {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+.result-card {
+    border-radius: 10px;
+    border: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+}
+
+.result-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.search-btn {
+    background-color: var(--primary-color);
+    border: none;
+    font-weight: 600;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+.search-btn:hover {
+    background-color: var(--secondary-color);
+}
+
+.phone-result {
+    background-color: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.phone-info-item {
+    flex: 1;
+    min-width: 200px;
+    margin: 10px;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    transition: transform 0.2s;
+}
+
+.phone-info-item:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.footer {
+    background-color: var(--dark-color);
+    color: white;
+    padding: 30px 0;
+    margin-top: 50px;
+}
+
+.search-type-label {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--primary-color);
+    transition: all 0.2s;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.search-type-label:hover {
+    background-color: rgba(67, 97, 238, 0.1);
+}
+
+.btn-check:checked + .search-type-label {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+    background-color: rgba(67, 97, 238, 0.1);
+    color: var(--primary-color);
+    font-size: 24px;
+}
+
+.analytics-badge {
+    background-color: var(--accent-color);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    margin-right: 5px;
+}
+
+.section-heading {
+    position: relative;
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
+
+.section-heading:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 50px;
+    height: 3px;
+    background-color: var(--primary-color);
+}
+
+.search-history-item {
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.2s;
+}
+
+.search-history-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease forwards;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .hero-section {
+        padding: 50px 0;
+    }
+    
+    .phone-info-item {
+        min-width: calc(100% - 20px);
+        margin: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .search-type-label {
+        padding: 8px 10px;
+        font-size: 0.85rem;
+    }
+} 
