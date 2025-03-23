@@ -689,4 +689,4 @@ if __name__ == '__main__':
     coordinator.initialize_project()
     
     # Start the Flask app
-    app.run(debug=True) 
+    app.run() 
