@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Valuable Domains - DorkySearch</title>
+    <!-- Google AdSense Code -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8117338737130356"
+     crossorigin="anonymous"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4361ee;
+            --secondary-color: #3f37c9;
+            --accent-color: #4895ef;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+        }
+        
+        .hero-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 60px 0;
+            margin-bottom: 30px;
+        }
+        
+        .domain-card {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            height: 100%;
+            margin-bottom: 20px;
+        }
+        
+        .domain-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .domain-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        
+        .badge-investment {
+            background-color: var(--accent-color);
+            color: white;
+        }
+        
+        .loading-spinner {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+        
+        .refresh-date {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">DorkySearch Domain Research</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/domains/valuable?key=admin123">Valuable Domains</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-5 fw-bold mb-3">Valuable Domains Under $10</h1>
+            <p class="lead mb-4">We found {{ domains|length }} domains with high investment potential</p>
+            
+            {% if refresh_date %}
+                <p class="refresh-date mb-3">Last updated: {{ refresh_date }}</p>
+            {% endif %}
+            
+            <button id="refreshButton" class="btn btn-light">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+        </div>
+    </section>
+
+    <div class="container my-5">
+        <!-- Google AdSense Ad Container -->
+        <div class="ad-container text-center my-4">
+            <ins class="adsbygoogle"
+                 style="display:block"
+                 data-ad-client="ca-pub-8117338737130356"
+                 data-ad-slot="2345678901"
+                 data-ad-format="auto"
+                 data-full-width-responsive="true"></ins>
+            <script>
+                 (adsbygoogle = window.adsbygoogle || []).push({});
+            </script>
+        </div>
+        
+        <div id="domainsContainer">
+            {% if domains %}
+                <div class="row">
+                    {% for domain in domains %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="domain-card bg-white p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="domain-name">{{ domain.name }}</span>
+                                    <span class="badge badge-investment">${{ domain.price }}</span>
+                                </div>
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Investment Potential:</span>
+                                        <span class="text-primary fw-bold">{{ domain.investment_potential }}/10</span>
+                                    </div>
+                                    <div class="progress">
+                                        <div class="progress-bar" role="progressbar" style="width: {{ domain.investment_potential * 10 }}%;" aria-valuenow="{{ domain.investment_potential }}" aria-valuemin="0" aria-valuemax="10"></div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Projected Value:</span>
+                                    <span class="text-success">${{ domain.projected_value }}</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-3">
+                                    <span>Category:</span>
+                                    <span class="text-secondary">{{ domain.category }}</span>
+                                </div>
+                                <a href="https://namecheap.com/domains/registration/results/?domain={{ domain.name }}" 
+                                   target="_blank" class="btn btn-primary w-100">
+                                    Check Availability
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% elif is_refreshing %}
+                <div class="loading-spinner">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <div class="ms-3">Searching for valuable domains...</div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    No valuable domains found. Click "Refresh Data" to search for new domains.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <footer class="bg-dark text-white py-4 mt-5">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>DorkySearch Domain Research</h5>
+                    <p>Find valuable domain names before they're gone.</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>© 2025 DorkySearch. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.getElementById('refreshButton').addEventListener('click', function() {
+            fetch('/api/domains/refresh?key=admin123')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Domain refresh started. This may take a minute. The page will reload after 30 seconds.');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 30000);
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while refreshing domain data.');
+                });
+        });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html> 
