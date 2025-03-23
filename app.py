@@ -18,13 +18,17 @@ import googleapiclient.discovery
 import googleapiclient.errors
 import stripe
 from functools import wraps
+from config import get_config
+from domain_research_agent import DomainResearchAgent
+import json
 
 # Load environment variables
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__, static_folder='static', static_url_path='/static')
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here')
+config = get_config()
+app.config.from_object(config)
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -32,7 +36,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'login'
 
 # Initialize Stripe
-stripe.api_key = os.getenv('STRIPE_SECRET_KEY')
+stripe.api_key = app.config['STRIPE_SECRET_KEY']
 
 # User search tracking
 user_search_counts = {}  # In a real app, this would be in a database
@@ -49,15 +53,15 @@ def check_search_limits(f):
                 'count': 0,
                 'is_subscribed': False
             }
-        
-        user_data = user_search_counts[user_id]
-        
-        if not user_data['is_subscribed'] and user_data['count'] >= 2:
-            return render_template('index.html',
-                                results={'error': 'You have reached your free search limit. Please subscribe to continue searching.'},
-                                current_user=current_user,
-                                stripe_publishable_key=os.getenv('STRIPE_PUBLISHABLE_KEY'))
-        
+            
+        # Get subscription status from database
+        # For demo, we just check if count > 2 and not subscribed
+        if user_search_counts[user_id]['count'] >= 2 and not user_search_counts[user_id]['is_subscribed']:
+            return render_template('search_limit.html', 
+                                  results={'error': 'You have reached your free search limit. Please subscribe to continue searching.'},
+                                  current_user=current_user,
+                                  stripe_publishable_key=app.config['STRIPE_PUBLISHABLE_KEY'])
+          
         return f(*args, **kwargs)
     return decorated_function
 
@@ -78,8 +82,8 @@ coordinator = AgentCoordinator()
 phone_scanner = PhoneScanner()
 
 # Google Custom Search API setup
-GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
-GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID')
+GOOGLE_API_KEY = app.config['GOOGLE_API_KEY']
+GOOGLE_CSE_ID = app.config['GOOGLE_CSE_ID']
 
 def generate_dork_query(query, search_type):
     """Generate a Google dork query based on search type"""
@@ -215,7 +219,7 @@ async def async_search():
     
     # Handle phone search separately
     if search_type == 'phone':
-    try:
+        try:
             cleaned_number = re.sub(r'[^\d+]', '', query)
             if not cleaned_number.startswith('+'):
                 cleaned_number = '+1' + cleaned_number
@@ -423,14 +427,14 @@ async def async_search():
         return render_template('index.html', 
                              query=query,
                              results=results,
-                             stripe_publishable_key=os.getenv('STRIPE_PUBLISHABLE_KEY'),
+                             stripe_publishable_key=app.config['STRIPE_PUBLISHABLE_KEY'],
                              current_user=current_user)
     except Exception as e:
         print(f"Search error: {str(e)}")
         traceback.print_exc()
         return render_template('index.html', 
                              results={'error': f'An error occurred: {str(e)}', 'search_items': []},
-                             stripe_publishable_key=os.getenv('STRIPE_PUBLISHABLE_KEY'),
+                             stripe_publishable_key=app.config['STRIPE_PUBLISHABLE_KEY'],
                              current_user=current_user)
 
 def get_insights_for_search_type(search_type):
@@ -503,7 +507,7 @@ def create_checkout_session():
         checkout_session = stripe.checkout.Session.create(
             payment_method_types=['card'],
             line_items=[{
-                'price': os.getenv('STRIPE_PRICE_ID'),  # Your subscription price ID from Stripe
+                'price': app.config['STRIPE_PRICE_ID'],  # Your subscription price ID from Stripe
                 'quantity': 1,
             }],
             mode='subscription',
@@ -683,6 +687,98 @@ def auth_status():
             "isAuthenticated": False,
             "message": "User not authenticated"
         })
+
+# Health check endpoint for monitoring
+@app.route('/health')
+def health_check():
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': time.time(),
+        'version': '1.0.0'
+    }), 200
+
+@app.route('/domains/valuable', methods=['GET'])
+@login_required
+@check_search_limits
+def find_valuable_domains():
+    """Find potentially valuable domains under $10"""
+    try:
+        count = request.args.get('count', default=20, type=int)
+        count = min(count, 50)  # Limit to maximum 50 domains
+        
+        # Check if we already have results cached
+        try:
+            with open('valuable_domains.json', 'r') as f:
+                domains = json.load(f)
+                last_updated = os.path.getmtime('valuable_domains.json')
+                current_time = time.time()
+                # If the file is older than 24 hours (86400 seconds), regenerate
+                if current_time - last_updated > 86400:
+                    # Start background task to refresh data
+                    import threading
+                    thread = threading.Thread(target=run_domain_research_bg)
+                    thread.daemon = True
+                    thread.start()
+        except (FileNotFoundError, json.JSONDecodeError):
+            # If file doesn't exist yet or is invalid, run the agent now
+            # This will block the request, but only for the first user
+            agent = DomainResearchAgent()
+            domains = agent.run(count=count)
+            agent.save_results(domains)
+        
+        # Filter for domains under $10 (this should already be done by the agent,
+        # but we're double-checking)
+        affordable_domains = [domain for domain in domains if domain['price'] < 10.0]
+        
+        # Sort by investment potential
+        affordable_domains.sort(key=lambda x: x['score'], reverse=True)
+        
+        # Limit to requested count
+        affordable_domains = affordable_domains[:count]
+        
+        return render_template(
+            'valuable_domains.html',
+            domains=affordable_domains,
+            count=len(affordable_domains),
+            current_user=current_user
+        )
+    except Exception as e:
+        print(f"Error finding valuable domains: {str(e)}")
+        traceback.print_exc()
+        return render_template(
+            'valuable_domains.html',
+            error=f"An error occurred: {str(e)}",
+            domains=[],
+            current_user=current_user
+        )
+
+def run_domain_research_bg():
+    """Run domain research in the background"""
+    try:
+        print("Starting background domain research...")
+        agent = DomainResearchAgent()
+        domains = agent.run(count=50)
+        agent.save_results(domains)
+        print("Background domain research completed and saved")
+    except Exception as e:
+        print(f"Error in background domain research: {str(e)}")
+        traceback.print_exc()
+
+@app.route('/api/domains/refresh', methods=['POST'])
+@login_required
+def refresh_domains():
+    """API endpoint to refresh domain data"""
+    # Start the background task
+    import threading
+    thread = threading.Thread(target=run_domain_research_bg)
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({
+        "status": "success",
+        "message": "Domain research started in background",
+        "estimated_time": "2-5 minutes"
+    })
 
 if __name__ == '__main__':
     # Initialize the project

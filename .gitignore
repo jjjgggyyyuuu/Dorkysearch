@@ -2,9 +2,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
-.env
 *.so
 .Python
+env/
 build/
 develop-eggs/
 dist/
@@ -16,49 +16,68 @@ lib64/
 parts/
 sdist/
 var/
-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-*.manifest
-*.spec
-.pytest_cache/
-.coverage
-htmlcov/
-.tox/
-.nox/
-.hypothesis/
-.venv/
+.env
+.venv
 venv/
 ENV/
-env/
+.coverage
+htmlcov/
+.pytest_cache/
 
 # Node.js
 node_modules/
 npm-debug.log
-yarn-debug.log
 yarn-error.log
-.pnpm-debug.log
-.npm/
-.yarn/
+yarn-debug.log
+.pnp/
+.pnp.js
+coverage/
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# React build artifacts
-frontend/build/
-frontend/dist/
-frontend/.next/
-frontend/.cache/
+# Production
+.env.production
+static/
+logs/
+*.log
+.env.staging
 
-# IDE & OS specific
+# IDEs and Editors
 .idea/
 .vscode/
 *.swp
 *.swo
+*~
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
+# OS specific
 .DS_Store
 Thumbs.db
-desktop.ini
+ehthumbs.db
+Desktop.ini
 
 # Embedded git repositories
 frontend-new/
 phoneinfoga/
 swarm-project/temp-frontend/
 temp-frontend/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+postgres-data/
+
+# Docker
+.docker/
+docker-volumes/
