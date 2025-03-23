@@ -33,7 +33,7 @@ An advanced OSINT search platform for comprehensive digital investigations.
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/DorkySearch.git
+   git clone https://github.com/jjjgggyyyuuu/DorkySearch.git
    cd DorkySearch
    ```
 

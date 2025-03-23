@@ -56,3 +56,9 @@ frontend/.cache/
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Embedded git repositories
+frontend-new/
+phoneinfoga/
+swarm-project/temp-frontend/
+temp-frontend/
