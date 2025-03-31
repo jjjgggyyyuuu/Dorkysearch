@@ -1,66 +1,64 @@
-import os
-from dotenv import load_dotenv
+<?php
+// config.php
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'u892824626_dorkysearch');
+define('DB_USER', 'u892824626_dorkysearch');
+define('DB_PASS', 'YOUR_PASSWORD');
 
-# Load environment variables
-load_dotenv()
+// API Keys
+define('GOOGLE_API_KEY', 'your_google_api_key');
+define('STRIPE_KEY', 'your_stripe_key');
 
-class Config:
-    """Base configuration."""
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-key-please-change')
-    FLASK_APP = 'app.py'
-    STATIC_FOLDER = 'static'
-    TEMPLATES_FOLDER = 'templates'
+return [
+    'app' => [
+        'name' => 'DorkySearch',
+        'env' => getenv('APP_ENV') ?: 'production',
+        'debug' => getenv('APP_DEBUG') ?: false,
+        'url' => getenv('APP_URL') ?: 'https://dorkysearch.org',
+    ],
     
-    # Stripe Configuration
-    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
-    STRIPE_PUBLISHABLE_KEY = os.getenv('STRIPE_PUBLISHABLE_KEY')
-    STRIPE_PRICE_ID = os.getenv('STRIPE_PRICE_ID')
+    'database' => [
+        'driver' => 'mysql',
+        'host' => getenv('DB_HOST') ?: 'localhost',
+        'database' => getenv('DB_DATABASE') ?: 'dorkysearch',
+        'username' => getenv('DB_USERNAME') ?: 'dorkysearch',
+        'password' => getenv('DB_PASSWORD') ?: '',
+        'charset' => 'utf8mb4',
+        'collation' => 'utf8mb4_unicode_ci',
+    ],
     
-    # Google Search API
-    GOOGLE_API_KEY = os.getenv('GOOGLE_API_KEY')
-    GOOGLE_CSE_ID = os.getenv('GOOGLE_CSE_ID')
+    'api' => [
+        'whois' => [
+            'timeout' => 30,
+            'servers' => [
+                'com' => 'whois.verisign-grs.com',
+                'net' => 'whois.verisign-grs.com',
+                'org' => 'whois.pir.org',
+                'io' => 'whois.nic.io',
+            ],
+        ],
+        'dns' => [
+            'timeout' => 5,
+            'types' => ['A', 'AAAA', 'CNAME', 'MX', 'NS', 'TXT'],
+        ],
+    ],
     
-    # Database
-    DATABASE_URL = os.getenv('DATABASE_URL', 'sqlite:///./dorkysearch.db')
-
-
-class DevelopmentConfig(Config):
-    """Development configuration."""
-    DEBUG = True
-    TESTING = False
-
-
-class TestingConfig(Config):
-    """Testing configuration."""
-    DEBUG = False
-    TESTING = True
-    DATABASE_URL = os.getenv('TEST_DATABASE_URL', 'sqlite:///./test.db')
-
-
-class ProductionConfig(Config):
-    """Production configuration."""
-    DEBUG = False
-    TESTING = False
+    'cache' => [
+        'driver' => 'file',
+        'path' => __DIR__ . '/storage/cache',
+        'ttl' => 3600, // 1 hour
+    ],
     
-    # In production, ensure SSL is enforced
-    SESSION_COOKIE_SECURE = True
-    REMEMBER_COOKIE_SECURE = True
-    SESSION_COOKIE_HTTPONLY = True
-    REMEMBER_COOKIE_HTTPONLY = True
-    
-    # Server settings optimized for production
-    PREFERRED_URL_SCHEME = 'https'
-
-
-# Configuration dictionary
-config = {
-    'development': DevelopmentConfig,
-    'testing': TestingConfig,
-    'production': ProductionConfig,
-    'default': DevelopmentConfig
-}
-
-def get_config():
-    """Get the configuration based on FLASK_ENV."""
-    env = os.getenv('FLASK_ENV', 'default')
-    return config.get(env, config['default']) 
+    'security' => [
+        'rate_limit' => [
+            'enabled' => true,
+            'max_requests' => 60,
+            'per_minutes' => 1,
+        ],
+        'cors' => [
+            'allowed_origins' => ['*'],
+            'allowed_methods' => ['GET', 'POST', 'OPTIONS'],
+            'allowed_headers' => ['Content-Type'],
+        ],
+    ],
+];
