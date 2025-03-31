@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DorkySearch - Domain Analysis Tool</title>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="/assets/css/style.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <a href="/" class="logo">DorkySearch</a>
+            <button id="darkModeToggle" class="btn" data-tooltip="Toggle Dark Mode">🌙</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <form id="searchForm" class="search-form">
+            <div class="input-group">
+                <label for="domainInput" class="input-label">Enter Domain Name</label>
+                <input type="text" id="domainInput" class="input-field" 
+                       placeholder="example.com" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Analyze Domain</button>
+        </form>
+
+        <div id="loadingSpinner" class="loading hidden">
+            <div class="loading-spinner"></div>
+        </div>
+
+        <section id="resultsSection" class="results-section">
+            <!-- Results will be dynamically inserted here -->
+        </section>
+    </main>
+
+    <!-- JavaScript Modules -->
+    <!-- Note: type="module" enables ES6 module support -->
+    <script type="module" src="/assets/js/utils.js"></script>
+    <script type="module" src="/assets/js/api-client.js"></script>
+    <script type="module" src="/assets/js/main.js"></script>
+</body>
+</html> 

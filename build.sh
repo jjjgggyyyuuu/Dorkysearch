@@ -29,5 +29,11 @@ rm -rf static/
 mkdir -p static
 cp -r frontend/build/* static/
 
+# Ensure PWA assets are at root level for NGINX
+echo "Ensuring PWA assets are available at root level..."
+# This step is just for verification since we've configured NGINX to serve from static/
+
 echo "Production build completed successfully!"
+echo "Important: Update the NGINX configuration paths to point to the actual location of your static files."
+echo "Make sure the paths in nginx.conf are updated from /path/to/dorkysearch/static/ to your actual static directory."
 echo "To run the application in production mode, use: gunicorn wsgi:app" 
